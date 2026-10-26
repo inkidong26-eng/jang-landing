@@ -176,6 +176,10 @@ video.layer{display:none}
 .skip[hidden]{display:none}
 .bgm{position:fixed;right:max(18px,env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:40;display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 18px;border-radius:999px;border:0;background:rgba(11,32,51,.82);color:#E6FFFA;font:600 15px "IBM Plex Sans KR",sans-serif;cursor:pointer;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 10px 30px rgba(4,14,24,.35),inset 0 0 0 1px rgba(127,240,220,.35);transition:transform .3s ease,background-color .3s ease}
 .bgm:hover{transform:translateY(-2px);background:rgba(11,124,118,.9)}
+.bgm.hint{background:linear-gradient(135deg,#FFC48F,#F7A25C);color:#0B2033;animation:bgmpulse 2.4s ease-in-out infinite}
+.bgm.hint .eq i{background:#0B2033}
+@keyframes bgmpulse{0%,100%{box-shadow:0 10px 30px rgba(4,14,24,.35),0 0 0 0 rgba(247,162,92,.5)}50%{box-shadow:0 10px 30px rgba(4,14,24,.35),0 0 0 10px rgba(247,162,92,0)}}
+@media (prefers-reduced-motion:reduce){.bgm.hint{animation:none}}
 .bgm:focus-visible{outline:3px solid #FFC48F;outline-offset:3px}
 .bgm .eq{display:inline-flex;align-items:flex-end;gap:2px;height:14px}
 .bgm .eq i{display:block;width:3px;height:4px;border-radius:2px;background:#7FF0DC}
@@ -504,16 +508,20 @@ video.layer{display:none}
     if(!a.paused||trying) return;
     trying=true;a.preload='auto';a.volume=0;
     var p=a.play();
-    if(p&&p.then){p.then(function(){trying=false;started=true;set(true);fade(TARGET);detach();}).catch(function(){trying=false;});}
+    if(p&&p.then){p.then(function(){trying=false;started=true;b.classList.remove('hint');set(true);fade(TARGET);detach();}).catch(function(){trying=false;if(!userOff){b.classList.add('hint');l.textContent='탭하면 음악이 나와요';}});}
     else{trying=false;started=true;set(true);fade(TARGET);detach();}
   }
   function onAny(e){ if(userOff||(e&&e.target&&e.target.nodeType===1&&b.contains(e.target))) return; start(); }
   function detach(){EV.forEach(function(e){window.removeEventListener(e,onAny,true);});}
   EV.forEach(function(e){window.addEventListener(e,onAny,{capture:true,passive:true});});
+  // 페이지가 열리면 바로 재생 시도 (브라우저가 허락하면 즉시 시작)
+  function tryAuto(){ if(!userOff) start(); }
+  if(document.readyState==='complete') tryAuto(); else window.addEventListener('load',tryAuto);
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden&&!started&&!userOff) start(); });
   b.addEventListener('click',function(ev){
     ev.stopPropagation();
     if(a.paused){userOff=false;start();}
-    else{userOff=true;detach();fade(0,function(){a.pause();});set(false);}
+    else{userOff=true;detach();b.classList.remove('hint');fade(0,function(){a.pause();});set(false);}
   });
 })();
 </script>
