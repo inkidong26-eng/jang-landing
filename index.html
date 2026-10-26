@@ -490,7 +490,7 @@ video.layer{display:none}
   try{ v.muted=true; var pr=v.play(); if(pr&&pr.catch) pr.catch(finish); }catch(e){ finish(); }
 })();
 </script>
-<audio id="bgm" src="bgm.mp3" preload="none" loop></audio>
+<audio id="bgm" src="bgm.mp3" preload="metadata" loop></audio>
 <button type="button" class="bgm" id="bgmBtn" aria-pressed="false" aria-label="배경음악 켜기"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span id="bgmLabel">음악 켜기</span></button>
 <script>
 (function(){
@@ -498,9 +498,22 @@ video.layer{display:none}
   var TARGET=0.35;
   function fade(to,done){clearInterval(t);t=setInterval(function(){var v=a.volume+(to>a.volume?0.03:-0.03);if((to>a.volume&&v>=to)||(to<a.volume&&v<=to)){v=to;clearInterval(t);done&&done();}a.volume=Math.max(0,Math.min(1,v));},60);}
   function set(on){b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);b.setAttribute('aria-label',on?'배경음악 끄기':'배경음악 켜기');l.textContent=on?'음악 끄기':'음악 켜기';}
-  b.addEventListener('click',function(){
-    if(a.paused){a.volume=0;var p=a.play();set(true);if(p&&p.catch)p.catch(function(){set(false);});fade(TARGET);}
-    else{fade(0,function(){a.pause();});set(false);}
+  var userOff=false,started=false,trying=false;
+  var EV=['scroll','wheel','touchstart','touchend','pointerdown','click','keydown'];
+  function start(){
+    if(!a.paused||trying) return;
+    trying=true;a.preload='auto';a.volume=0;
+    var p=a.play();
+    if(p&&p.then){p.then(function(){trying=false;started=true;set(true);fade(TARGET);detach();}).catch(function(){trying=false;});}
+    else{trying=false;started=true;set(true);fade(TARGET);detach();}
+  }
+  function onAny(e){ if(userOff||(e&&e.target&&e.target.nodeType===1&&b.contains(e.target))) return; start(); }
+  function detach(){EV.forEach(function(e){window.removeEventListener(e,onAny,true);});}
+  EV.forEach(function(e){window.addEventListener(e,onAny,{capture:true,passive:true});});
+  b.addEventListener('click',function(ev){
+    ev.stopPropagation();
+    if(a.paused){userOff=false;start();}
+    else{userOff=true;detach();fade(0,function(){a.pause();});set(false);}
   });
 })();
 </script>
