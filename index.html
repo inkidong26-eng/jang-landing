@@ -174,6 +174,16 @@ video.layer{display:none}
 }
 
 .skip[hidden]{display:none}
+.bgm{position:fixed;right:max(18px,env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:40;display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 18px;border-radius:999px;border:0;background:rgba(11,32,51,.82);color:#E6FFFA;font:600 15px "IBM Plex Sans KR",sans-serif;cursor:pointer;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 10px 30px rgba(4,14,24,.35),inset 0 0 0 1px rgba(127,240,220,.35);transition:transform .3s ease,background-color .3s ease}
+.bgm:hover{transform:translateY(-2px);background:rgba(11,124,118,.9)}
+.bgm:focus-visible{outline:3px solid #FFC48F;outline-offset:3px}
+.bgm .eq{display:inline-flex;align-items:flex-end;gap:2px;height:14px}
+.bgm .eq i{display:block;width:3px;height:4px;border-radius:2px;background:#7FF0DC}
+.bgm.on .eq i{animation:eq 1s ease-in-out infinite alternate}
+.bgm.on .eq i:nth-child(2){animation-delay:.25s}.bgm.on .eq i:nth-child(3){animation-delay:.5s}
+@keyframes eq{from{height:3px}to{height:14px}}
+@media (prefers-reduced-motion:reduce){.bgm.on .eq i{animation:none;height:10px}}
+
 </style>
 </head>
 <body>
@@ -478,6 +488,20 @@ video.layer{display:none}
   v.addEventListener('ended',finish); var srcs=v.querySelectorAll('source'); if(srcs.length) srcs[srcs.length-1].addEventListener('error',finish); s.addEventListener('click',finish);
   setTimeout(finish,7000);
   try{ v.muted=true; var pr=v.play(); if(pr&&pr.catch) pr.catch(finish); }catch(e){ finish(); }
+})();
+</script>
+<audio id="bgm" src="bgm.mp3" preload="none" loop></audio>
+<button type="button" class="bgm" id="bgmBtn" aria-pressed="false" aria-label="배경음악 켜기"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span id="bgmLabel">음악 켜기</span></button>
+<script>
+(function(){
+  var a=document.getElementById('bgm'),b=document.getElementById('bgmBtn'),l=document.getElementById('bgmLabel'),t;
+  var TARGET=0.35;
+  function fade(to,done){clearInterval(t);t=setInterval(function(){var v=a.volume+(to>a.volume?0.03:-0.03);if((to>a.volume&&v>=to)||(to<a.volume&&v<=to)){v=to;clearInterval(t);done&&done();}a.volume=Math.max(0,Math.min(1,v));},60);}
+  function set(on){b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);b.setAttribute('aria-label',on?'배경음악 끄기':'배경음악 켜기');l.textContent=on?'음악 끄기':'음악 켜기';}
+  b.addEventListener('click',function(){
+    if(a.paused){a.volume=0;var p=a.play();set(true);if(p&&p.catch)p.catch(function(){set(false);});fade(TARGET);}
+    else{fade(0,function(){a.pause();});set(false);}
+  });
 })();
 </script>
 </body>
